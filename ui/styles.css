@@ -1,0 +1,220 @@
+/* MDS tokens (Mellon Design System) — reference: .cursor/skills/mellon-design-quality */
+:root {
+  --bg-primary: #05070A;
+  --brand-accent: #3B82F6;
+  --text-heading: #93C5FD;
+  --text-body: #94A3B8;
+  --surface-code: #0F172A;
+  --surface-card: #0F172A;
+  --border-subtle: #1E293B;
+  --success: #22C55E;
+  --warning: #EAB308;
+  --error: #DC2626;
+  --chart-bar: #3B82F6;
+  --primary-foreground: #ffffff;
+}
+
+/* Pico dark theme overrides: map to MDS */
+[data-theme="dark"] {
+  --pico-background-color: var(--bg-primary);
+  --pico-color: var(--text-body);
+  --pico-primary: var(--brand-accent);
+  --pico-primary-hover: #2563eb;
+  --pico-primary-inverse: var(--primary-foreground);
+  --pico-muted-border-color: var(--border-subtle);
+  --pico-muted-color: var(--text-body);
+  --pico-del-color: var(--error);
+}
+
+/* Graph container: MDS surfaces */
+.graph-container {
+  min-height: 480px;
+  height: 560px;
+  background: var(--surface-card);
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  position: relative;
+}
+
+.graph-zoom-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.graph-zoom-wrap.graph-zoom-dragging {
+  cursor: grabbing;
+}
+
+.graph-zoom-view {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+.graph-zoom-view svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+}
+
+.graph-zoom-controls {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+.graph-zoom-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--text-heading);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.graph-zoom-btn:hover {
+  background: var(--border-subtle);
+  color: var(--brand-accent);
+}
+
+.graph-zoom-btn:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+.graph-container .edge {
+  stroke: var(--border-subtle);
+  stroke-width: 1.2;
+  fill: none;
+  opacity: 0.85;
+}
+
+.graph-container .edge.from-nucleus {
+  stroke: var(--brand-accent);
+  opacity: 0.5;
+}
+
+.graph-container .node {
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.graph-container .node:hover {
+  filter: brightness(1.1);
+}
+
+.graph-container .node.highlight {
+  filter: brightness(1.2);
+}
+
+/* Núcleo (cerebro): centro que conecta con el resto — glow y acento */
+.graph-container .node[data-type="macro"] .node-circle {
+  fill: var(--brand-accent);
+  stroke: var(--text-heading);
+  stroke-width: 3;
+}
+
+.graph-container .node[data-type="macro"] {
+  filter: drop-shadow(0 0 8px var(--brand-accent));
+}
+
+.graph-container .node[data-type="session"] .node-circle {
+  fill: var(--chart-bar);
+  stroke: var(--text-heading);
+}
+
+.graph-container .node[data-type="step"] .node-circle {
+  fill: var(--chart-bar);
+  stroke: var(--border-subtle);
+}
+
+.graph-container .node[data-type="paradox"] .node-circle {
+  fill: var(--error);
+  stroke: var(--error);
+}
+
+.graph-container .node[data-type="refactor"] .node-circle {
+  fill: var(--warning);
+  stroke: var(--warning);
+}
+
+.graph-container .node[data-type="debate"] .node-circle {
+  fill: var(--surface-code);
+  stroke: var(--border-subtle);
+}
+
+.graph-container .node-text {
+  font-size: 11px;
+  fill: var(--primary-foreground);
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.graph-container .node[data-type="refactor"] .node-text,
+.graph-container .node[data-type="paradox"] .node-text {
+  fill: var(--bg-primary);
+}
+
+/* Empty state: onboarding (MDS never-do: no pantalla en blanco) */
+.empty-state {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+.empty-state h2 {
+  color: var(--text-heading);
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: var(--text-body);
+  margin-bottom: 1rem;
+  max-width: 28rem;
+}
+
+.empty-state a {
+  color: var(--brand-accent);
+}
+
+/* Status: loading y error con tokens MDS */
+#status:empty {
+  display: none;
+}
+
+#status.loading {
+  color: var(--text-body);
+}
+
+#status.error {
+  color: var(--error);
+}
