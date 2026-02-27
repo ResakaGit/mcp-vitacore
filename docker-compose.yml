@@ -1,0 +1,12 @@
+services:
+  mcp_vitacore:
+    build: .
+    env:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      VITACORE_DB_PATH: /data/vitacore.sqlite
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+    volumes:
+      - vitacore_data:/data
+
+volumes:
+  vitacore_data:
