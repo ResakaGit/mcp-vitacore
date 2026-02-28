@@ -110,21 +110,71 @@ function createApp(storage) {
             return c.json({ error: String(err) }, 500);
         }
     });
+    /** Logs/analytics: últimos steps cross-session y sesiones recientes para analizar requests y relaciones */
+    app.get("/api/analytics", async (c) => {
+        try {
+            const [sessions, stepsForOracle] = await Promise.all([
+                storage.getRecentSessions(30),
+                storage.getStepsForOracle(80),
+            ]);
+            const dates = new Set();
+            const epics = new Set();
+            sessions.forEach((s) => {
+                const dateMatch = s.id.match(/^\d{2}\/\d{2}\/\d{4}/);
+                if (dateMatch)
+                    dates.add(dateMatch[0]);
+                const epicMatch = s.id.match(/^([a-z]+-[a-z]+)/);
+                if (epicMatch)
+                    epics.add(epicMatch[1]);
+            });
+            const recentSteps = stepsForOracle.map((row) => ({
+                session_id: row.session_id,
+                action: row.action,
+                implications: row.implications?.slice(0, 120) ?? "",
+                created_at: row.created_at,
+            }));
+            return c.json({
+                dates: Array.from(dates).sort(),
+                epics: Array.from(epics).sort(),
+                sessions: sessions.map((s) => ({ id: s.id, summary: s.summary?.slice(0, 100) ?? "" })),
+                recentSteps,
+            });
+        }
+        catch (err) {
+            console.error("GET /api/analytics error:", err);
+            return c.json({ error: String(err) }, 500);
+        }
+    });
     app.get("/", (c) => c.redirect("/index.html"));
     app.use("*", serveStatic({ root: UI_ROOT }));
     return app;
 }
+/**
+ * Misma DB que el MCP: Cursor usa ./data/vitacore.sqlite desde la raíz del workspace.
+ * Sin VITACORE_DB_PATH, usamos workspace/data/vitacore.sqlite para que UI y MCP compartan datos.
+ */
+function resolveDbPath() {
+    if (process.env.VITACORE_DB_PATH) {
+        const raw = process.env.VITACORE_DB_PATH;
+        if (path.isAbsolute(raw) || raw === ":memory:")
+            return raw;
+        return path.resolve(process.cwd(), raw);
+    }
+    return path.resolve(PROJECT_ROOT, "..", "..", "data", "vitacore.sqlite");
+}
 function main() {
     const config = getConfig();
-    if (config.VITACORE_DB_PATH !== ":memory:") {
-        const dbDir = path.dirname(config.VITACORE_DB_PATH);
+    const dbPath = resolveDbPath();
+    if (dbPath !== ":memory:") {
+        const dbDir = path.dirname(dbPath);
         fs.mkdirSync(dbDir, { recursive: true });
     }
-    const storage = createStorageAdapter(config.VITACORE_DB_PATH);
+    const storage = createStorageAdapter(dbPath);
     const app = createApp(storage);
     const port = Number(process.env.UI_PORT ?? "3780");
     serve({ fetch: app.fetch, port }, (info) => {
         console.log(`Vitacore UI: http://localhost:${info.port}`);
+        console.log(`DB: ${dbPath}`);
     });
 }
 main();

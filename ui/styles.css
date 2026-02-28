@@ -26,11 +26,14 @@
   --pico-del-color: var(--error);
 }
 
-/* Graph container: MDS surfaces */
+/* Graph: estructura limpia — canvas arriba, toolbar abajo (nada se corta) */
 .graph-container {
+  display: flex;
+  flex-direction: column;
   min-height: 480px;
   height: 560px;
-  background: var(--surface-card);
+  max-height: 75vh;
+  background: var(--bg-primary);
   border-radius: 0.25rem;
   border: 1px solid var(--border-subtle);
   overflow: hidden;
@@ -38,9 +41,9 @@
 }
 
 .graph-zoom-wrap {
+  flex: 1;
+  min-height: 0;
   position: relative;
-  width: 100%;
-  height: 100%;
   overflow: hidden;
   cursor: grab;
 }
@@ -51,14 +54,14 @@
 
 .graph-zoom-view {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  transform-origin: center center;
+  z-index: 0;
   pointer-events: none;
 }
 
+/* SVG llena el view; el pan/zoom va en el grupo interno .graph-pan-zoom-layer */
 .graph-zoom-view svg {
   display: block;
   width: 100%;
@@ -66,13 +69,16 @@
   pointer-events: auto;
 }
 
-.graph-zoom-controls {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
+/* Barra de herramientas debajo del canvas: zoom siempre visible, sin superposición */
+.graph-toolbar {
+  flex: none;
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
-  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .graph-zoom-btn {
@@ -102,21 +108,34 @@
   outline-offset: 2px;
 }
 
-.graph-container .edge {
-  stroke: var(--border-subtle);
+/* Líneas tipo red luminosa; glow aplicado vía filtro SVG en app.js */
+.graph-container .graph-edges .edge {
+  stroke: var(--text-heading);
   stroke-width: 1.2;
   fill: none;
+  opacity: 0.7;
+}
+
+.graph-container .graph-edges .edge.from-nucleus {
+  stroke: var(--brand-accent);
   opacity: 0.85;
 }
 
-.graph-container .edge.from-nucleus {
-  stroke: var(--brand-accent);
-  opacity: 0.5;
+/* Deriva suave para que nodos juntos no ocupen siempre el mismo sitio */
+@keyframes node-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -2px); }
+  50% { transform: translate(-1px, 2px); }
+  75% { transform: translate(-2px, -1px); }
 }
 
 .graph-container .node {
   cursor: pointer;
   transition: filter 0.15s ease;
+}
+
+.graph-container .node.node-drift {
+  animation: node-drift 10s ease-in-out infinite;
 }
 
 .graph-container .node:hover {
@@ -127,8 +146,8 @@
   filter: brightness(1.2);
 }
 
-/* Núcleo (cerebro): centro que conecta con el resto — glow y acento */
-.graph-container .node[data-type="macro"] .node-circle {
+/* Núcleo (cerebro): centro que conecta con el resto — glow y acento. .node-shape = polygon (rombo) */
+.graph-container .node[data-type="macro"] .node-shape {
   fill: var(--brand-accent);
   stroke: var(--text-heading);
   stroke-width: 3;
@@ -138,27 +157,27 @@
   filter: drop-shadow(0 0 8px var(--brand-accent));
 }
 
-.graph-container .node[data-type="session"] .node-circle {
+.graph-container .node[data-type="session"] .node-shape {
   fill: var(--chart-bar);
   stroke: var(--text-heading);
 }
 
-.graph-container .node[data-type="step"] .node-circle {
+.graph-container .node[data-type="step"] .node-shape {
   fill: var(--chart-bar);
   stroke: var(--border-subtle);
 }
 
-.graph-container .node[data-type="paradox"] .node-circle {
+.graph-container .node[data-type="paradox"] .node-shape {
   fill: var(--error);
   stroke: var(--error);
 }
 
-.graph-container .node[data-type="refactor"] .node-circle {
+.graph-container .node[data-type="refactor"] .node-shape {
   fill: var(--warning);
   stroke: var(--warning);
 }
 
-.graph-container .node[data-type="debate"] .node-circle {
+.graph-container .node[data-type="debate"] .node-shape {
   fill: var(--surface-code);
   stroke: var(--border-subtle);
 }
@@ -217,4 +236,121 @@
 
 #status.error {
   color: var(--error);
+}
+
+/* Barra del botón Filtros */
+.graph-filter-bar {
+  margin-bottom: 0.5rem;
+}
+
+.graph-filter-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--text-heading);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.graph-filter-btn:hover {
+  background: var(--border-subtle);
+  color: var(--brand-accent);
+}
+
+/* Modal de filtros */
+.filter-dialog {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  max-width: 90vw;
+  width: 420px;
+  background: var(--surface-card);
+  color: var(--text-body);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.filter-dialog::backdrop {
+  background: rgba(5, 7, 10, 0.75);
+}
+
+.filter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-form fieldset {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.filter-form legend {
+  color: var(--text-heading);
+  font-size: 0.85rem;
+}
+
+.filter-form label {
+  display: block;
+  margin: 0.25rem 0;
+  cursor: pointer;
+}
+
+.filter-form input[type="text"] {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  color: var(--text-body);
+}
+
+.filter-logs {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  color: var(--text-body);
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.filter-logs-list {
+  margin: 0.25rem 0 0 0;
+  padding-left: 1.25rem;
+}
+
+.filter-logs-list li {
+  margin: 0.2rem 0;
+}
+
+.filter-dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.filter-dialog-actions button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: var(--surface-code);
+  color: var(--text-heading);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.filter-dialog-actions .filter-apply {
+  background: var(--brand-accent);
+  color: var(--primary-foreground);
+}
+
+.filter-dialog-actions button:hover {
+  background: var(--border-subtle);
+  color: var(--brand-accent);
 }

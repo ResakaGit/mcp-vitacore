@@ -1,6 +1,6 @@
 {
   "name": "mcp-vitacore",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP Context Project Vitacore: consolidación de memoria con Gemini + SQLite",
   "type": "module",
   "exports": {

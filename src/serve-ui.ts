@@ -132,6 +132,39 @@ function createApp(storage: StoragePort) {
     }
   });
 
+  /** Logs/analytics: últimos steps cross-session y sesiones recientes para analizar requests y relaciones */
+  app.get("/api/analytics", async (c) => {
+    try {
+      const [sessions, stepsForOracle] = await Promise.all([
+        storage.getRecentSessions(30),
+        storage.getStepsForOracle(80),
+      ]);
+      const dates = new Set<string>();
+      const epics = new Set<string>();
+      sessions.forEach((s) => {
+        const dateMatch = s.id.match(/^\d{2}\/\d{2}\/\d{4}/);
+        if (dateMatch) dates.add(dateMatch[0]);
+        const epicMatch = s.id.match(/^([a-z]+-[a-z]+)/);
+        if (epicMatch) epics.add(epicMatch[1]);
+      });
+      const recentSteps = stepsForOracle.map((row) => ({
+        session_id: row.session_id,
+        action: row.action,
+        implications: row.implications?.slice(0, 120) ?? "",
+        created_at: row.created_at,
+      }));
+      return c.json({
+        dates: Array.from(dates).sort(),
+        epics: Array.from(epics).sort(),
+        sessions: sessions.map((s) => ({ id: s.id, summary: s.summary?.slice(0, 100) ?? "" })),
+        recentSteps,
+      });
+    } catch (err) {
+      console.error("GET /api/analytics error:", err);
+      return c.json({ error: String(err) }, 500);
+    }
+  });
+
   app.get("/", (c) => c.redirect("/index.html"));
   app.use("*", serveStatic({ root: UI_ROOT }));
 

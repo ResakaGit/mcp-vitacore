@@ -26,3 +26,9 @@ Respuesta JSON:
 - **edges**: array de `{ from, to }` (ids de nodos)
 
 Ids de nodos: `macro`; `session:<session_id>`; `step:<session_id>:<index>`; `paradox:<id>`; `refactor:<id>`; `debate:<id>`.
+
+## Filtros (modal Filtros)
+
+- **Tipo, Fecha, Épica:** checkboxes como antes.
+- **Buscar en id/label/resumen:** varios términos separados por coma o espacio = **OR** (ej. `auth, billing, limits`).
+- **Solo subgrafo conectado al texto:** si está activo y hay búsqueda por texto, se muestra únicamente el subgrafo conexo que contiene los nodos que matchean (árbol conectado alrededor del query). Útil para ver solo la rama relacionada con un tema.
