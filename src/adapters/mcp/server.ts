@@ -26,6 +26,17 @@ function parseArgs<T>(schema: z.ZodType<T>, args: unknown): { ok: true; data: T 
   return { ok: false, error: toolErrorResult(zodErrorToOneLine(parsed.error)) };
 }
 
+const DESCRIPTION_DOC = "TOOL_DESCRIPTION_CONVENTION.md";
+
+function requireToolDescription(
+  name: string,
+  config: { description?: string; inputSchema: unknown }
+): void {
+  if (typeof config.description !== "string" || !config.description.trim()) {
+    throw new Error(`Tool ${name}: description is required (${DESCRIPTION_DOC}).`);
+  }
+}
+
 function wrapToolHandler<TArgs, TResult extends ToolResult>(
   handler: (args: TArgs) => TResult | Promise<TResult>
 ) {
@@ -52,11 +63,15 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   const closeSession = closeSessionOrchestrator({ storage, gemini });
   const evolveMacro = evolveMacroOrchestrator({ storage, gemini });
 
-  server.registerTool(
+  function reg(name: string, config: { description: string; inputSchema: unknown }, handler: (args: unknown) => Promise<ToolResult>): void {
+    requireToolDescription(name, config);
+    server.registerTool(name, config as Parameters<McpServer["registerTool"]>[1], handler);
+  }
+  reg(
     "log_step",
     {
       description:
-        "Registra un paso en la sesión para trazabilidad y recuperación posterior. Parámetros: session_id (ej. epic-xyz-YYYY-MM-DD), action (descripción breve), implications (resumen en 1–2 frases). Usar al finalizar cada subagente en flujos orquestados.",
+        "Logs a step in the session for traceability and later recovery. Args: session_id (e.g. epic-xyz-YYYY-MM-DD), action (short label), implications (1–2 sentence summary). Use when each subagent finishes in orchestrated flows.",
       inputSchema: schemas.logStepSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -71,11 +86,11 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "close_session",
     {
       description:
-        "Cierra la sesión: agrega los steps, genera un resumen con Gemini y lo persiste en el macro. Parámetro: session_id. Usar al cierre del flujo para consolidar memoria de largo plazo.",
+        "Closes the session: aggregates steps, generates a summary with Gemini and persists it to the macro. Args: session_id (required). Use at flow end to consolidate long-term memory. Do not use for per-step logging; use log_step instead.",
       inputSchema: schemas.closeSessionSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -85,11 +100,11 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "hydrate_agent_context",
     {
       description:
-        "Devuelve contexto de alta densidad para recuperar memoria del flujo: macro, sesiones recientes y debates abiertos. Parámetro opcional: role (filtrar por rol). Usar al iniciar un subagente para continuar con los últimos pasos. No usar al cierre del flujo; para cierre usar log_step o close_session.",
+        "Returns high-density context to recover flow memory: macro, recent sessions, open debates. Args: role (optional, filter by role). Use when starting a subagent to continue from the last steps. Do not use at flow end; use log_step or close_session for closure.",
       inputSchema: schemas.hydrateAgentContextSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -99,21 +114,21 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "trigger_macro_evolution",
     {
       description:
-        "Evoluciona el documento Macro integrando las últimas sesiones cerradas y genera un nuevo resumen con Gemini; persiste el resultado. Sin parámetros. Usar para refrescar la visión de alto nivel del proyecto.",
+        "Evolves the Macro document by merging the latest closed sessions and generates a new summary with Gemini; persists the result. No args. Use to refresh the project's high-level view.",
       inputSchema: schemas.triggerMacroEvolutionSchema,
     },
     wrapToolHandler(() => evolveMacro())
   );
 
-  server.registerTool(
+  reg(
     "ask_the_oracle",
     {
       description:
-        "Consulta una duda técnica al oráculo: el MCP combina contexto reciente (macro/sesiones) y Gemini devuelve una directiva técnica curada en 3 pasos. Parámetro: technical_doubt (texto de la duda).",
+        "Asks the oracle a technical question. MCP merges recent context (macro/sessions) and Gemini returns a curated 3-step directive. Args: technical_doubt (required, string).",
       inputSchema: schemas.askOracleSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -123,21 +138,21 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "check_architectural_health",
     {
       description:
-        "Analiza consistencia entre el Macro y las sesiones recientes; detecta paradojas arquitectónicas con Gemini, las persiste y devuelve un resumen. Sin parámetros. Usar en revisiones de salud del sistema.",
+        "Checks consistency between the Macro and recent sessions; detects architectural paradoxes with Gemini, persists them and returns a summary. No args. Use for system health reviews.",
       inputSchema: schemas.checkArchitecturalHealthSchema,
     },
     wrapToolHandler(async () => checkHealthApp.checkArchitecturalHealth({ storage, gemini }))
   );
 
-  server.registerTool(
+  reg(
     "resolve_architectural_paradox",
     {
       description:
-        "Lee una paradoja arquitectónica por id. Parámetro: paradox_id (requerido). El MCP genera una sugerencia de resolución con Gemini y marca la paradoja como resuelta. Complementa check_architectural_health.",
+        "Reads an architectural paradox by id; MCP generates a resolution suggestion with Gemini and marks it resolved. Args: paradox_id (required). Use after check_architectural_health to resolve reported paradoxes.",
       inputSchema: schemas.resolveArchitecturalParadoxSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -147,11 +162,11 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "submit_for_background_review",
     {
       description:
-        "Solicita una revisión en background de una sesión: Gemini genera un plan de refactor a partir de la bitácora y se persiste. Parámetro: session_id. Usar para consolidar deuda técnica detectada en el flujo.",
+        "Submits a session for background review: Gemini produces a refactor plan from the log and it is persisted. Args: session_id (required). Use to consolidate technical debt detected in the flow.",
       inputSchema: schemas.submitForBackgroundReviewSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -161,11 +176,11 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     })
   );
 
-  server.registerTool(
+  reg(
     "get_pending_refactors",
     {
       description:
-        "Lista los planes de refactor pendientes generados por submit_for_background_review. Parámetro opcional: module_name (filtrar por módulo). Usar para priorizar trabajo de consolidación.",
+        "Lists pending refactor plans from submit_for_background_review. Args: module_name (optional, filter by module). Use to prioritize consolidation work.",
       inputSchema: schemas.getPendingRefactorsSchema,
     },
     wrapToolHandler(async (args: unknown) => {
