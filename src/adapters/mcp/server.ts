@@ -71,7 +71,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     "log_step",
     {
       description:
-        "Logs a step in the session for traceability and later recovery. Args: session_id (e.g. epic-xyz-YYYY-MM-DD), action (short label), implications (1–2 sentence summary). Use when each subagent finishes in orchestrated flows.",
+        "Logs a step in the session for traceability and later recovery. Args: session_id (e.g. epic-xyz-YYYY-MM-DD), action (short label), implications (1–2 sentence summary), agent_key (optional: class or class-variant, e.g. paladin, paladin-enojado, paladin-1). Date is stored by MCP (created_at). Use when each subagent finishes in orchestrated flows.",
       inputSchema: schemas.logStepSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -81,7 +81,8 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
         storage,
         parsed.data.session_id,
         parsed.data.action,
-        parsed.data.implications
+        parsed.data.implications,
+        parsed.data.agent_key
       );
     })
   );
@@ -104,13 +105,13 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     "hydrate_agent_context",
     {
       description:
-        "Returns high-density context to recover flow memory: macro, recent sessions, open debates. Args: role (optional, filter by role). Use when starting a subagent to continue from the last steps. Do not use at flow end; use log_step or close_session for closure.",
+        "Returns high-density context to recover flow memory: macro, recent sessions, recent steps by agent_key, open debates. Args: agent_key (optional). Use class only (e.g. paladin) to get all steps for that class; use full key (e.g. paladin-enojado, paladin-1) for exact match. Use when starting a subagent to continue from the last steps. Do not use at flow end; use log_step or close_session for closure.",
       inputSchema: schemas.hydrateAgentContextSchema,
     },
     wrapToolHandler(async (args: unknown) => {
       const parsed = parseArgs(schemas.hydrateAgentContextSchema, args);
       if (!parsed.ok) return parsed.error;
-      return hydrateApp.hydrateAgentContext(storage, parsed.data.role);
+      return hydrateApp.hydrateAgentContext(storage, parsed.data.agent_key);
     })
   );
 

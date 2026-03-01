@@ -5,9 +5,10 @@ export async function logStep(
   storage: StoragePort,
   sessionId: string,
   action: string,
-  implications: string
+  implications: string,
+  agentKey?: string
 ): Promise<ToolResult> {
-  await storage.insertStep(sessionId, action, implications);
+  await storage.insertStep(sessionId, action, implications, agentKey);
   return {
     content: [{ type: "text", text: "Step registrado." }],
   };

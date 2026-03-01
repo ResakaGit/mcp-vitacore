@@ -5,8 +5,9 @@ import type { GeminiPort } from "../ports/gemini.js";
 
 describe("closeSessionOrchestrator", () => {
   it("returns error when session already closed", async () => {
-    const storage: StoragePort = {
+    const storage = {
       getStepsBySession: vi.fn(),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn().mockResolvedValue(true),
       insertStep: vi.fn(),
       insertSession: vi.fn(),
@@ -15,11 +16,11 @@ describe("closeSessionOrchestrator", () => {
       setMacro: vi.fn(),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn(),
       evolveMacro: vi.fn(),
-    };
+    } as unknown as GeminiPort;
     const closeSession = closeSessionOrchestrator({ storage, gemini });
     const result = await closeSession("s1");
     expect(result.isError).toBe(true);
@@ -28,8 +29,9 @@ describe("closeSessionOrchestrator", () => {
   });
 
   it("returns error when session has no steps", async () => {
-    const storage: StoragePort = {
+    const storage = {
       getStepsBySession: vi.fn().mockResolvedValue([]),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn().mockResolvedValue(false),
       insertStep: vi.fn(),
       insertSession: vi.fn(),
@@ -38,11 +40,11 @@ describe("closeSessionOrchestrator", () => {
       setMacro: vi.fn(),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn(),
       evolveMacro: vi.fn(),
-    };
+    } as unknown as GeminiPort;
     const closeSession = closeSessionOrchestrator({ storage, gemini });
     const result = await closeSession("s1");
     expect(result.isError).toBe(true);
@@ -51,9 +53,10 @@ describe("closeSessionOrchestrator", () => {
   });
 
   it("returns stable error when insertSession rejects", async () => {
-    const steps = [{ action: "a1", implications: "i1", created_at: "2025-01-01T00:00:00Z" }];
-    const storage: StoragePort = {
+    const steps = [{ action: "a1", implications: "i1", created_at: "2025-01-01T00:00:00Z", agent_key: "" }];
+    const storage = {
       getStepsBySession: vi.fn().mockResolvedValue(steps),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn().mockResolvedValue(false),
       insertStep: vi.fn(),
       insertSession: vi.fn().mockRejectedValue(new Error("SQLITE_CONSTRAINT")),
@@ -62,11 +65,11 @@ describe("closeSessionOrchestrator", () => {
       setMacro: vi.fn(),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn().mockResolvedValue("Resumen."),
       evolveMacro: vi.fn(),
-    };
+    } as unknown as GeminiPort;
     const closeSession = closeSessionOrchestrator({ storage, gemini });
     const result = await closeSession("s1");
     expect(result.isError).toBe(true);
@@ -76,9 +79,10 @@ describe("closeSessionOrchestrator", () => {
   });
 
   it("returns success when insertSession succeeds", async () => {
-    const steps = [{ action: "a1", implications: "i1", created_at: "2025-01-01T00:00:00Z" }];
-    const storage: StoragePort = {
+    const steps = [{ action: "a1", implications: "i1", created_at: "2025-01-01T00:00:00Z", agent_key: "" }];
+    const storage = {
       getStepsBySession: vi.fn().mockResolvedValue(steps),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn().mockResolvedValue(false),
       insertStep: vi.fn(),
       insertSession: vi.fn().mockResolvedValue(undefined),
@@ -87,11 +91,11 @@ describe("closeSessionOrchestrator", () => {
       setMacro: vi.fn(),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn().mockResolvedValue("Resumen."),
       evolveMacro: vi.fn(),
-    };
+    } as unknown as GeminiPort;
     const closeSession = closeSessionOrchestrator({ storage, gemini });
     const result = await closeSession("s1");
     expect(result.isError).toBeFalsy();

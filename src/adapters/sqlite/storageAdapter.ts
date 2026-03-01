@@ -80,37 +80,101 @@ export function initSchema(db: Database.Database): void {
   db.pragma("journal_mode = WAL");
 }
 
+/** Añade columna agent_key a steps si no existe (idempotente). */
+function migrateStepsAgentKey(db: Database.Database): void {
+  try {
+    db.exec(`ALTER TABLE steps ADD COLUMN agent_key TEXT NOT NULL DEFAULT ''`);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!msg.includes("duplicate column")) throw e;
+  }
+  try {
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_steps_agent_key ON steps(agent_key)`);
+  } catch {
+    // index may already exist
+  }
+}
+
 export function createStorageAdapter(dbPath: string): StoragePort {
   const db = new Database(dbPath);
   initSchema(db);
+  migrateStepsAgentKey(db);
 
   return {
-    async insertStep(sessionId: string, action: string, implications: string): Promise<void> {
+    async insertStep(
+      sessionId: string,
+      action: string,
+      implications: string,
+      agentKey?: string
+    ): Promise<void> {
+      const key = agentKey ?? "";
       const stmt = db.prepare(
-        "INSERT INTO steps (session_id, action, implications, created_at) VALUES (?, ?, ?, ?)"
+        "INSERT INTO steps (session_id, action, implications, created_at, agent_key) VALUES (?, ?, ?, ?, ?)"
       );
-      stmt.run(sessionId, action, implications, toISO());
+      stmt.run(sessionId, action, implications, toISO(), key);
     },
 
     async getStepsBySession(sessionId: string): Promise<StepRow[]> {
       const stmt = db.prepare(
-        "SELECT action, implications, created_at FROM steps WHERE session_id = ? ORDER BY created_at ASC"
+        "SELECT action, implications, created_at, COALESCE(agent_key, '') AS agent_key FROM steps WHERE session_id = ? ORDER BY created_at ASC"
       );
-      const rows = stmt.all(sessionId) as Array<{ action: string; implications: string; created_at: string }>;
+      const rows = stmt.all(sessionId) as Array<{
+        action: string;
+        implications: string;
+        created_at: string;
+        agent_key: string;
+      }>;
+      return rows;
+    },
+
+    async getRecentStepsByAgentKey(agentKey: string, limit: number): Promise<StepRow[]> {
+      if (limit <= 0) return [];
+      if (agentKey === "") {
+        const stmt = db.prepare(
+          "SELECT action, implications, created_at, COALESCE(agent_key, '') AS agent_key FROM steps ORDER BY created_at DESC LIMIT ?"
+        );
+        const rows = stmt.all(limit) as Array<{
+          action: string;
+          implications: string;
+          created_at: string;
+          agent_key: string;
+        }>;
+        return rows;
+      }
+      const useExact = agentKey.includes("-");
+      const sql = useExact
+        ? "SELECT action, implications, created_at, COALESCE(agent_key, '') AS agent_key FROM steps WHERE agent_key = ? ORDER BY created_at DESC LIMIT ?"
+        : "SELECT action, implications, created_at, COALESCE(agent_key, '') AS agent_key FROM steps WHERE agent_key = ? OR agent_key LIKE ? ORDER BY created_at DESC LIMIT ?";
+      const stmt = db.prepare(sql);
+      const rows = (useExact
+        ? stmt.all(agentKey, limit)
+        : stmt.all(agentKey, agentKey + "-%", limit)) as Array<{
+        action: string;
+        implications: string;
+        created_at: string;
+        agent_key: string;
+      }>;
       return rows;
     },
 
     async getStepsForOracle(limit: number): Promise<StepRowForOracle[]> {
       const stmt = db.prepare(
-        "SELECT session_id, action, implications, created_at FROM steps ORDER BY created_at DESC LIMIT ?"
+        "SELECT session_id, action, implications, created_at, agent_key FROM steps ORDER BY created_at DESC LIMIT ?"
       );
       const rows = stmt.all(limit) as Array<{
         session_id: string;
         action: string;
         implications: string;
         created_at: string;
+        agent_key: string | null;
       }>;
-      return rows;
+      return rows.map((r) => ({
+        session_id: r.session_id,
+        action: r.action,
+        implications: r.implications,
+        created_at: r.created_at,
+        ...(r.agent_key != null && r.agent_key !== "" ? { agent_key: r.agent_key } : {}),
+      }));
     },
 
     async hasSession(sessionId: string): Promise<boolean> {

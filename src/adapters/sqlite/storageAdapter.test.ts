@@ -74,6 +74,22 @@ describe("storageAdapter", () => {
       expect(limited).toHaveLength(2);
     });
 
+    it("getRecentStepsByAgentKey: prefix match by class, exact match by full key", async () => {
+      await storage.insertStep("s1", "paladin: step 1", "i1", "paladin");
+      await storage.insertStep("s1", "paladin-enojado: step", "i2", "paladin-enojado");
+      await storage.insertStep("s1", "paladin-1: step", "i3", "paladin-1");
+      await storage.insertStep("s1", "erudito: step", "i4", "erudito");
+      const allPaladin = await storage.getRecentStepsByAgentKey("paladin", 10);
+      expect(allPaladin.length).toBe(3);
+      const onlyEnojado = await storage.getRecentStepsByAgentKey("paladin-enojado", 10);
+      expect(onlyEnojado.length).toBe(1);
+      expect(onlyEnojado[0].action).toBe("paladin-enojado: step");
+      const onlyErudito = await storage.getRecentStepsByAgentKey("erudito", 10);
+      expect(onlyErudito.length).toBe(1);
+      const emptyKey = await storage.getRecentStepsByAgentKey("", 2);
+      expect(emptyKey.length).toBe(2);
+    });
+
     it("insertParadox and getOpenParadoxes and getParadox and resolveParadox", async () => {
       await storage.insertParadox({
         id: "p1",

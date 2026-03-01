@@ -7,6 +7,7 @@ export type StepRow = {
   action: string;
   implications: string;
   created_at: string;
+  agent_key: string;
 };
 
 export type SessionRow = {
@@ -28,6 +29,7 @@ export type StepRowForOracle = {
   action: string;
   implications: string;
   created_at: string;
+  agent_key?: string;
 };
 
 export type ParadoxRow = {
@@ -65,8 +67,9 @@ export type InsertRefactorPlanParams = {
 };
 
 export interface StoragePort {
-  insertStep(sessionId: string, action: string, implications: string): Promise<void>;
+  insertStep(sessionId: string, action: string, implications: string, agentKey?: string): Promise<void>;
   getStepsBySession(sessionId: string): Promise<StepRow[]>;
+  getRecentStepsByAgentKey(agentKey: string, limit: number): Promise<StepRow[]>;
   getStepsForOracle(limit: number): Promise<StepRowForOracle[]>;
   hasSession(sessionId: string): Promise<boolean>;
   insertSession(sessionId: string, summary: string): Promise<void>;

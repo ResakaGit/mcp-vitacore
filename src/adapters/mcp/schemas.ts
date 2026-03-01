@@ -4,6 +4,7 @@ export const logStepSchema = z.object({
   session_id: z.string().min(1, "session_id requerido"),
   action: z.string().min(1, "action requerido"),
   implications: z.string(),
+  agent_key: z.string().optional(),
 });
 
 export const closeSessionSchema = z.object({
@@ -11,7 +12,7 @@ export const closeSessionSchema = z.object({
 });
 
 export const hydrateAgentContextSchema = z.object({
-  role: z.string().default(""),
+  agent_key: z.string().default(""),
 });
 
 export const triggerMacroEvolutionSchema = z.object({});
@@ -34,9 +35,9 @@ export const getPendingRefactorsSchema = z.object({
   module_name: z.string().optional(),
 });
 
-export type LogStepInput = z.infer<typeof logStepSchema>;
 export type CloseSessionInput = z.infer<typeof closeSessionSchema>;
 export type HydrateAgentContextInput = z.infer<typeof hydrateAgentContextSchema>;
+export type LogStepInput = z.infer<typeof logStepSchema>;
 export type AskOracleInput = z.infer<typeof askOracleSchema>;
 export type ResolveArchitecturalParadoxInput = z.infer<typeof resolveArchitecturalParadoxSchema>;
 export type SubmitForBackgroundReviewInput = z.infer<typeof submitForBackgroundReviewSchema>;

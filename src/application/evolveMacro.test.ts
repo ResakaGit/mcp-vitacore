@@ -5,8 +5,9 @@ import type { GeminiPort } from "../ports/gemini.js";
 
 describe("evolveMacroOrchestrator", () => {
   it("returns stable error when setMacro rejects", async () => {
-    const storage: StoragePort = {
+    const storage = {
       getStepsBySession: vi.fn(),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn(),
       insertStep: vi.fn(),
       insertSession: vi.fn(),
@@ -15,11 +16,11 @@ describe("evolveMacroOrchestrator", () => {
       setMacro: vi.fn().mockRejectedValue(new Error("disk full")),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn(),
       evolveMacro: vi.fn().mockResolvedValue("Nuevo macro."),
-    };
+    } as unknown as GeminiPort;
     const handler = evolveMacroOrchestrator({ storage, gemini });
     const result = await handler();
     expect(result.isError).toBe(true);
@@ -29,8 +30,9 @@ describe("evolveMacroOrchestrator", () => {
   });
 
   it("returns success when setMacro succeeds", async () => {
-    const storage: StoragePort = {
+    const storage = {
       getStepsBySession: vi.fn(),
+      getRecentStepsByAgentKey: vi.fn(),
       hasSession: vi.fn(),
       insertStep: vi.fn(),
       insertSession: vi.fn(),
@@ -39,11 +41,11 @@ describe("evolveMacroOrchestrator", () => {
       setMacro: vi.fn().mockResolvedValue(undefined),
       getOpenDebates: vi.fn(),
       closeDebate: vi.fn(),
-    };
-    const gemini: GeminiPort = {
+    } as unknown as StoragePort;
+    const gemini = {
       generateSessionSummary: vi.fn(),
       evolveMacro: vi.fn().mockResolvedValue("Nuevo contenido."),
-    };
+    } as unknown as GeminiPort;
     const handler = evolveMacroOrchestrator({ storage, gemini });
     const result = await handler();
     expect(result.isError).toBeFalsy();
