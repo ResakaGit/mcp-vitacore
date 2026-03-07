@@ -8,7 +8,6 @@ import type {
   StoragePort,
   StepRow,
   SessionRow,
-  DebateRow,
   StepRowForOracle,
   ParadoxRow,
   RefactorPlanRow,
@@ -44,15 +43,6 @@ export function initSchema(db: Database.Database): void {
       updated_at TEXT NOT NULL
     );
     INSERT OR IGNORE INTO macro (id, content, updated_at) VALUES (1, '', '1970-01-01T00:00:00.000Z');
-
-    CREATE TABLE IF NOT EXISTS debates (
-      id TEXT PRIMARY KEY,
-      role TEXT NOT NULL,
-      title TEXT NOT NULL,
-      status TEXT NOT NULL,
-      content TEXT,
-      created_at TEXT NOT NULL
-    );
 
     CREATE TABLE IF NOT EXISTS paradoxes (
       id TEXT PRIMARY KEY,
@@ -192,9 +182,14 @@ export function createStorageAdapter(dbPath: string): StoragePort {
 
     async getRecentSessions(limit: number): Promise<SessionRow[]> {
       const stmt = db.prepare(
-        "SELECT id, summary, closed_at FROM sessions ORDER BY closed_at DESC LIMIT ?"
+        "SELECT id, summary, closed_at, created_at FROM sessions ORDER BY closed_at DESC LIMIT ?"
       );
-      const rows = stmt.all(limit) as Array<{ id: string; summary: string; closed_at: string | null }>;
+      const rows = stmt.all(limit) as Array<{
+        id: string;
+        summary: string;
+        closed_at: string | null;
+        created_at: string;
+      }>;
       return rows;
     },
 
@@ -207,23 +202,6 @@ export function createStorageAdapter(dbPath: string): StoragePort {
     async setMacro(content: string): Promise<void> {
       const stmt = db.prepare("UPDATE macro SET content = ?, updated_at = ? WHERE id = 1");
       stmt.run(content, toISO());
-    },
-
-    async getOpenDebates(role?: string): Promise<DebateRow[]> {
-      let sql = "SELECT id, role, title, content FROM debates WHERE status = 'open'";
-      const params: string[] = [];
-      if (role !== undefined && role !== "") {
-        sql += " AND role = ?";
-        params.push(role);
-      }
-      sql += " ORDER BY created_at ASC";
-      const stmt = params.length ? db.prepare(sql).bind(...params) : db.prepare(sql);
-      const rows = stmt.all() as Array<{ id: string; role: string; title: string; content: string | null }>;
-      return rows;
-    },
-
-    async closeDebate(id: string): Promise<void> {
-      db.prepare("UPDATE debates SET status = 'closed' WHERE id = ?").run(id);
     },
 
     async insertParadox(params: InsertParadoxParams): Promise<void> {

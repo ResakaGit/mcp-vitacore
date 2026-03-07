@@ -6,7 +6,7 @@ describe("checkArchitecturalHealth", () => {
     const ports = {
       storage: {
         getMacro: vi.fn().mockResolvedValue("Macro"),
-        getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "S1" }]),
+        getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "S1", closed_at: null, created_at: "2025-01-01T00:00:00Z" }]),
         insertParadox: vi.fn(),
         getOpenParadoxes: vi.fn().mockResolvedValue([]),
       },
@@ -22,7 +22,7 @@ describe("checkArchitecturalHealth", () => {
     const ports = {
       storage: {
         getMacro: vi.fn().mockResolvedValue("UTC"),
-        getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "used local" }]),
+        getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "used local", closed_at: null, created_at: "2025-01-01T00:00:00Z" }]),
         insertParadox: vi.fn().mockResolvedValue(undefined),
         getOpenParadoxes: vi.fn().mockResolvedValue([{ id: "p1", description: "UTC vs local" }]),
       },

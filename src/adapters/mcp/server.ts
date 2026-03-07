@@ -26,14 +26,25 @@ function parseArgs<T>(schema: z.ZodType<T>, args: unknown): { ok: true; data: T 
   return { ok: false, error: toolErrorResult(zodErrorToOneLine(parsed.error)) };
 }
 
-const DESCRIPTION_DOC = "TOOL_DESCRIPTION_CONVENTION.md";
+/** Nombres de tools MCP (single source of truth; SEP: snake_case, 1–128 chars). */
+export const TOOL_NAMES = {
+  LOG_STEP: "log_step",
+  CLOSE_SESSION: "close_session",
+  HYDRATE_AGENT_CONTEXT: "hydrate_agent_context",
+  TRIGGER_MACRO_EVOLUTION: "trigger_macro_evolution",
+  ASK_THE_ORACLE: "ask_the_oracle",
+  CHECK_ARCHITECTURAL_HEALTH: "check_architectural_health",
+  RESOLVE_ARCHITECTURAL_PARADOX: "resolve_architectural_paradox",
+  SUBMIT_FOR_BACKGROUND_REVIEW: "submit_for_background_review",
+  GET_PENDING_REFACTORS: "get_pending_refactors",
+} as const;
 
 function requireToolDescription(
   name: string,
   config: { description?: string; inputSchema: unknown }
 ): void {
   if (typeof config.description !== "string" || !config.description.trim()) {
-    throw new Error(`Tool ${name}: description is required (${DESCRIPTION_DOC}).`);
+    throw new Error(`Tool "${name}": description is required for MCP tools.`);
   }
 }
 
@@ -68,7 +79,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
     server.registerTool(name, config as Parameters<McpServer["registerTool"]>[1], handler);
   }
   reg(
-    "log_step",
+    TOOL_NAMES.LOG_STEP,
     {
       description:
         "Logs a step in the session for traceability and later recovery. Args: session_id (e.g. epic-xyz-YYYY-MM-DD), action (short label), implications (1–2 sentence summary), agent_key (optional: class or class-variant, e.g. paladin, paladin-enojado, paladin-1). Date is stored by MCP (created_at). Use when each subagent finishes in orchestrated flows.",
@@ -88,7 +99,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "close_session",
+    TOOL_NAMES.CLOSE_SESSION,
     {
       description:
         "Closes the session: aggregates steps, generates a summary with Gemini and persists it to the macro. Args: session_id (required). Use at flow end to consolidate long-term memory. Do not use for per-step logging; use log_step instead.",
@@ -102,10 +113,10 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "hydrate_agent_context",
+    TOOL_NAMES.HYDRATE_AGENT_CONTEXT,
     {
       description:
-        "Returns high-density context to recover flow memory: macro, recent sessions, recent steps by agent_key, open debates. Args: agent_key (optional). Use class only (e.g. paladin) to get all steps for that class; use full key (e.g. paladin-enojado, paladin-1) for exact match. Use when starting a subagent to continue from the last steps. Do not use at flow end; use log_step or close_session for closure.",
+        "Returns high-density context to recover flow memory: macro, recent sessions, recent steps by agent_key. Args: agent_key (optional). Use class only (e.g. paladin) to get all steps for that class; use full key (e.g. paladin-enojado, paladin-1) for exact match. Use when starting a subagent to continue from the last steps. Do not use at flow end; use log_step or close_session for closure.",
       inputSchema: schemas.hydrateAgentContextSchema,
     },
     wrapToolHandler(async (args: unknown) => {
@@ -116,7 +127,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "trigger_macro_evolution",
+    TOOL_NAMES.TRIGGER_MACRO_EVOLUTION,
     {
       description:
         "Evolves the Macro document by merging the latest closed sessions and generates a new summary with Gemini; persists the result. No args. Use to refresh the project's high-level view.",
@@ -126,7 +137,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "ask_the_oracle",
+    TOOL_NAMES.ASK_THE_ORACLE,
     {
       description:
         "Asks the oracle a technical question. MCP merges recent context (macro/sessions) and Gemini returns a curated 3-step directive. Args: technical_doubt (required, string).",
@@ -140,7 +151,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "check_architectural_health",
+    TOOL_NAMES.CHECK_ARCHITECTURAL_HEALTH,
     {
       description:
         "Checks consistency between the Macro and recent sessions; detects architectural paradoxes with Gemini, persists them and returns a summary. No args. Use for system health reviews.",
@@ -150,7 +161,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "resolve_architectural_paradox",
+    TOOL_NAMES.RESOLVE_ARCHITECTURAL_PARADOX,
     {
       description:
         "Reads an architectural paradox by id; MCP generates a resolution suggestion with Gemini and marks it resolved. Args: paradox_id (required). Use after check_architectural_health to resolve reported paradoxes.",
@@ -164,7 +175,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "submit_for_background_review",
+    TOOL_NAMES.SUBMIT_FOR_BACKGROUND_REVIEW,
     {
       description:
         "Submits a session for background review: Gemini produces a refactor plan from the log and it is persisted. Args: session_id (required). Use to consolidate technical debt detected in the flow.",
@@ -178,7 +189,7 @@ export function registerVitacoreTools(server: McpServer, ports: ServerPorts): vo
   );
 
   reg(
-    "get_pending_refactors",
+    TOOL_NAMES.GET_PENDING_REFACTORS,
     {
       description:
         "Lists pending refactor plans from submit_for_background_review. Args: module_name (optional, filter by module). Use to prioritize consolidation work.",

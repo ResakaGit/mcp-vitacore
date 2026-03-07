@@ -11,11 +11,9 @@ describe("evolveMacroOrchestrator", () => {
       hasSession: vi.fn(),
       insertStep: vi.fn(),
       insertSession: vi.fn(),
-      getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "S1", closed_at: "2025-01-01T00:00:00Z" }]),
+      getRecentSessions: vi.fn().mockResolvedValue([{ id: "s1", summary: "S1", closed_at: "2025-01-01T00:00:00Z", created_at: "2025-01-01T00:00:00Z" }]),
       getMacro: vi.fn().mockResolvedValue("Macro actual"),
       setMacro: vi.fn().mockRejectedValue(new Error("disk full")),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn(),
@@ -39,8 +37,6 @@ describe("evolveMacroOrchestrator", () => {
       getRecentSessions: vi.fn().mockResolvedValue([]),
       getMacro: vi.fn().mockResolvedValue(null),
       setMacro: vi.fn().mockResolvedValue(undefined),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn(),

@@ -5,7 +5,7 @@
 
 import type { StoragePort } from "../ports/storage.js";
 import type { GeminiPort } from "../ports/gemini.js";
-import { toolErrorResult, type ToolResult } from "../domain/errors.js";
+import { toolErrorResult, toolSuccessResult, messageFromUnknown, type ToolResult } from "../domain/errors.js";
 
 const ORACLE_STEPS_LIMIT = 20;
 
@@ -23,11 +23,8 @@ export async function askOracle(ports: Ports, technicalDoubt: string): Promise<T
       sessionId: s.session_id,
     }));
     const answer = await ports.gemini.answerFromContext(technicalDoubt.trim(), contextRecords);
-    return {
-      content: [{ type: "text", text: answer }],
-    };
+    return toolSuccessResult(answer);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return toolErrorResult(`Oráculo falló: ${msg}`);
+    return toolErrorResult(`Oráculo falló: ${messageFromUnknown(err)}`);
   }
 }

@@ -177,11 +177,6 @@
   stroke: var(--warning);
 }
 
-.graph-container .node[data-type="debate"] .node-shape {
-  fill: var(--surface-code);
-  stroke: var(--border-subtle);
-}
-
 .graph-container .node-text {
   font-size: 11px;
   fill: var(--primary-foreground);
@@ -239,6 +234,61 @@
 }
 
 /* Barra del botón Filtros */
+/* Tira de fechas: navegación por día en el mapa */
+.map-date-strip {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.map-date-strip-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-body);
+}
+
+.map-date-strip-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.map-date-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.35rem;
+  background: var(--surface-card);
+  color: var(--text-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.map-date-chip:hover {
+  border-color: var(--brand-accent);
+  background: var(--surface-code);
+  color: var(--text-heading);
+}
+
+.map-date-chip--active {
+  border-color: var(--brand-accent);
+  background: var(--surface-code);
+  color: var(--text-heading);
+}
+
+.map-date-chip-label {
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+.map-date-chip-counts {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
 .graph-filter-bar {
   margin-bottom: 0.5rem;
 }
@@ -353,4 +403,76 @@
 .filter-dialog-actions button:hover {
   background: var(--border-subtle);
   color: var(--brand-accent);
+}
+
+/* Panel de detalle del nodo seleccionado */
+.node-detail-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.node-detail-panel[hidden] {
+  display: none;
+}
+
+.node-detail-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: var(--text-heading);
+}
+
+.node-detail-type,
+.node-detail-summary,
+.node-detail-session,
+.node-detail-edges {
+  margin: 0.35rem 0;
+  color: var(--text-body);
+}
+
+/* Minimap */
+.minimap-container {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.minimap-container .minimap-wrap {
+  pointer-events: auto;
+}
+
+.minimap-wrap {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.25rem;
+  background: var(--surface-card);
+  cursor: pointer;
+}
+
+.minimap-wrap svg {
+  display: block;
+}
+
+.minimap-edge {
+  stroke: var(--text-body);
+  stroke-width: 0.5;
+  opacity: 0.6;
+}
+
+.minimap-node {
+  fill: var(--brand-accent);
+}
+
+.minimap-viewport {
+  pointer-events: none;
+  stroke: var(--brand-accent);
+  opacity: 0.9;
 }

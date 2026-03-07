@@ -5,7 +5,7 @@
 
 import type { StoragePort } from "../ports/storage.js";
 import type { GeminiPort } from "../ports/gemini.js";
-import { toolErrorResult, type ToolResult } from "../domain/errors.js";
+import { toolErrorResult, toolSuccessResult, messageFromUnknown, type ToolResult } from "../domain/errors.js";
 
 export type Ports = { storage: StoragePort; gemini: GeminiPort };
 
@@ -36,11 +36,8 @@ export async function resolveArchitecturalParadox(ports: Ports, paradoxId: strin
     ]
       .filter(Boolean)
       .join("\n\n");
-    return {
-      content: [{ type: "text", text }],
-    };
+    return toolSuccessResult(text);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return toolErrorResult(`resolve_architectural_paradox falló: ${msg}`);
+    return toolErrorResult(`resolve_architectural_paradox falló: ${messageFromUnknown(err)}`);
   }
 }

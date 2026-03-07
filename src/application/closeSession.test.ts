@@ -14,8 +14,6 @@ describe("closeSessionOrchestrator", () => {
       getRecentSessions: vi.fn(),
       getMacro: vi.fn(),
       setMacro: vi.fn(),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn(),
@@ -38,8 +36,6 @@ describe("closeSessionOrchestrator", () => {
       getRecentSessions: vi.fn(),
       getMacro: vi.fn(),
       setMacro: vi.fn(),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn(),
@@ -63,8 +59,6 @@ describe("closeSessionOrchestrator", () => {
       getRecentSessions: vi.fn(),
       getMacro: vi.fn(),
       setMacro: vi.fn(),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn().mockResolvedValue("Resumen."),
@@ -89,8 +83,6 @@ describe("closeSessionOrchestrator", () => {
       getRecentSessions: vi.fn(),
       getMacro: vi.fn(),
       setMacro: vi.fn(),
-      getOpenDebates: vi.fn(),
-      closeDebate: vi.fn(),
     } as unknown as StoragePort;
     const gemini = {
       generateSessionSummary: vi.fn().mockResolvedValue("Resumen."),

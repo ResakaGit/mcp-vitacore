@@ -1,6 +1,6 @@
 import type { StoragePort } from "../ports/storage.js";
 import type { GeminiPort } from "../ports/gemini.js";
-import { toolErrorResult, type ToolResult } from "../domain/errors.js";
+import { toolErrorResult, toolSuccessResult, messageFromUnknown, type ToolResult } from "../domain/errors.js";
 
 export type Ports = { storage: StoragePort; gemini: GeminiPort };
 
@@ -14,12 +14,9 @@ export function closeSessionOrchestrator(ports: Ports): (sessionId: string) => P
     try {
       await ports.storage.insertSession(sessionId, summary);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("mcp-vitacore: insertSession failed:", msg);
+      console.error("mcp-vitacore: insertSession failed:", messageFromUnknown(err));
       return toolErrorResult("Error al guardar la sesión.");
     }
-    return {
-      content: [{ type: "text", text: "Sesión cerrada, bitácora procesada." }],
-    };
+    return toolSuccessResult("Sesión cerrada, bitácora procesada.");
   };
 }

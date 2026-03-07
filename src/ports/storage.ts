@@ -1,5 +1,5 @@
 /**
- * Puerto de persistencia: steps, sessions, macro, debates.
+ * Puerto de persistencia: steps, sessions, macro, paradoxes, refactor_plans.
  * Los use cases dependen solo de esta interfaz.
  */
 
@@ -14,13 +14,7 @@ export type SessionRow = {
   id: string;
   summary: string;
   closed_at: string | null;
-};
-
-export type DebateRow = {
-  id: string;
-  role: string;
-  title: string;
-  content: string | null;
+  created_at: string;
 };
 
 /** Step con session_id para contexto oráculo (últimos N cross-session). */
@@ -76,8 +70,6 @@ export interface StoragePort {
   getRecentSessions(limit: number): Promise<SessionRow[]>;
   getMacro(): Promise<string | null>;
   setMacro(content: string): Promise<void>;
-  getOpenDebates(role?: string): Promise<DebateRow[]>;
-  closeDebate(id: string): Promise<void>;
   insertParadox(params: InsertParadoxParams): Promise<void>;
   getOpenParadoxes(): Promise<ParadoxRow[]>;
   getParadox(id: string): Promise<ParadoxRow | null>;

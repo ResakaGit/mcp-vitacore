@@ -8,7 +8,7 @@ describe("storageAdapter", () => {
       const db = new Database(":memory:");
       initSchema(db);
       const steps = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as { name: string }[];
-      expect(steps.map((r) => r.name).sort()).toEqual(["debates", "macro", "paradoxes", "refactor_plans", "sessions", "steps"]);
+      expect(steps.map((r) => r.name).sort()).toEqual(["macro", "paradoxes", "refactor_plans", "sessions", "steps"]);
       const macro = db.prepare("SELECT id, content FROM macro").get() as { id: number; content: string };
       expect(macro.id).toBe(1);
       expect(macro.content).toBe("");
@@ -48,16 +48,6 @@ describe("storageAdapter", () => {
       expect(await storage.getMacro()).toBeNull();
       await storage.setMacro("macro content");
       expect(await storage.getMacro()).toBe("macro content");
-    });
-
-    it("getOpenDebates returns empty when no debates", async () => {
-      const all = await storage.getOpenDebates();
-      expect(all).toEqual([]);
-      expect(await storage.getOpenDebates("dev")).toEqual([]);
-    });
-
-    it("closeDebate does not throw", async () => {
-      await storage.closeDebate("nonexistent");
     });
 
     it("getStepsForOracle returns recent steps across sessions", async () => {

@@ -6,7 +6,7 @@
 import { randomUUID } from "node:crypto";
 import type { StoragePort } from "../ports/storage.js";
 import type { GeminiPort } from "../ports/gemini.js";
-import { toolErrorResult, type ToolResult } from "../domain/errors.js";
+import { toolErrorResult, toolSuccessResult, messageFromUnknown, type ToolResult } from "../domain/errors.js";
 
 export type Ports = { storage: StoragePort; gemini: GeminiPort };
 
@@ -33,16 +33,10 @@ export async function submitForBackgroundReview(ports: Ports, sessionId: string)
       moduleName: null,
       planText,
     });
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Revisión solicitada. Plan de refactor guardado (id: ${planId}). Usa get_pending_refactors para listar.`,
-        },
-      ],
-    };
+    return toolSuccessResult(
+      `Revisión solicitada. Plan de refactor guardado (id: ${planId}). Usa get_pending_refactors para listar.`
+    );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return toolErrorResult(`submit_for_background_review falló: ${msg}`);
+    return toolErrorResult(`submit_for_background_review falló: ${messageFromUnknown(err)}`);
   }
 }

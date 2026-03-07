@@ -9,12 +9,16 @@
 </head>
 <body>
   <main class="container">
+    <nav class="nav-bar" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="agenda.html">Bitácora (agenda)</a>
+      <label style="display: flex; align-items: center; gap: 0.35rem; margin: 0;">Fuente: <select id="db-source" aria-label="Base de datos"></select></label>
+    </nav>
     <h1>Mapa Vitacore</h1>
     <p>Macro, sesiones, pasos, paradojas y refactors como nodos conectados. <strong>Click en un nodo</strong> para resaltar vecinos; <strong>arrastrá</strong> para moverlo.</p>
     <div id="status" aria-live="polite"></div>
     <div id="graph" class="graph-container"></div>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="app.js"></script>
+  <script type="module" src="dist/graph-view.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

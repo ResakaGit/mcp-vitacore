@@ -1,11 +1,12 @@
 /**
  * Dominio: contrato de resultado de tools MCP (spec 2025-11-25).
  * Sin I/O; errores de ejecución se devuelven en el resultado con isError: true.
+ * isError siempre explícito para clientes MCP.
  */
 
 export type ToolSuccessResult = {
   content: Array<{ type: "text"; text: string }>;
-  isError?: false;
+  isError: false;
 };
 
 export type ToolErrorResult = {
@@ -14,6 +15,13 @@ export type ToolErrorResult = {
 };
 
 export type ToolResult = ToolSuccessResult | ToolErrorResult;
+
+export function toolSuccessResult(text: string): ToolSuccessResult {
+  return {
+    content: [{ type: "text", text }],
+    isError: false,
+  };
+}
 
 export function toolErrorResult(message: string): ToolErrorResult {
   return {
@@ -34,8 +42,13 @@ export function isToolError(value: unknown): value is ToolError {
   return value instanceof ToolError;
 }
 
+/** Extrae mensaje de error de forma consistente (DRY). */
+export function messageFromUnknown(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error == null) return "Unknown error";
+  return String(error);
+}
+
 export function errorToToolResult(error: unknown): ToolErrorResult {
-  const message =
-    error instanceof Error ? error.message : String(error ?? "Unknown error");
-  return toolErrorResult(message);
+  return toolErrorResult(messageFromUnknown(error));
 }

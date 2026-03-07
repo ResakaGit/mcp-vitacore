@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bitácora Vitacore</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .agenda-nav { margin-bottom: 1rem; }
+    .agenda-nav a { color: var(--brand-accent); }
+    .agenda-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .agenda-filters label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text-body); }
+    .agenda-day { margin-bottom: 1rem; border: 1px solid var(--border-subtle); border-radius: 0.25rem; overflow: hidden; background: var(--surface-card); }
+    .agenda-day-header { padding: 0.75rem 1rem; background: var(--bg-primary); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .agenda-day-header:hover { background: var(--border-subtle); }
+    .agenda-day-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-heading); }
+    .agenda-day-badge { font-size: 0.8rem; color: var(--text-body); }
+    .agenda-day-body { padding: 0 1rem 1rem; }
+    .agenda-session { margin-top: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: 0.25rem; border: 1px solid var(--border-subtle); }
+    .agenda-session:first-child { margin-top: 0.75rem; }
+    .agenda-session-id { font-weight: 600; color: var(--text-heading); margin-bottom: 0.25rem; }
+    .agenda-session-summary { font-size: 0.9rem; color: var(--text-body); margin-bottom: 0.5rem; }
+    .agenda-step { margin-top: 0.5rem; padding: 0.5rem 0.6rem; background: var(--surface-code); border-radius: 0.2rem; border-left: 3px solid var(--border-subtle); }
+    .agenda-step-meta { font-size: 0.75rem; color: var(--text-body); margin-bottom: 0.2rem; }
+    .agenda-step-action { font-weight: 500; color: var(--primary-foreground); }
+    .agenda-step-implications { font-size: 0.85rem; color: var(--text-body); margin-top: 0.2rem; }
+    .agenda-agent-badge { display: inline-block; padding: 0.15rem 0.4rem; border-radius: 0.2rem; font-size: 0.7rem; background: var(--brand-accent); color: var(--primary-foreground); margin-left: 0.35rem; }
+    .agenda-agent-badge.empty { background: var(--border-subtle); color: var(--text-body); }
+    #agenda-status:empty { display: none; }
+    #agenda-status.error { color: var(--error); }
+    #agenda-status.loading { color: var(--text-body); }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <nav class="agenda-nav">
+      <a href="index.html">← Mapa Vitacore</a>
+    </nav>
+    <h1>Bitácora</h1>
+    <p>Sesiones por día; tocá un día para ver los registros. Por defecto se muestra el <strong>último mes</strong>. Podés elegir rango (Desde / Hasta) y filtrar por agente.</p>
+    <div id="agenda-status" aria-live="polite"></div>
+    <div class="agenda-filters">
+      <label style="display: flex; align-items: center; gap: 0.35rem;">Fuente: <select id="agenda-db-source" aria-label="Base de datos"></select></label>
+      <label><input type="radio" name="agent_filter" value="all" checked> Todos</label>
+      <label><input type="radio" name="agent_filter" value="with_agent"> Con agente (Gemini/subagente)</label>
+      <label><input type="radio" name="agent_filter" value="without_agent"> Sin agente (manual)</label>
+      <label>Desde: <input type="date" id="agenda-date-from" aria-label="Fecha desde" /></label>
+      <label>Hasta: <input type="date" id="agenda-date-to" aria-label="Fecha hasta" /></label>
+    </div>
+    <div id="agenda-days"></div>
+  </main>
+  <script src="agenda.js"></script>
+</body>
+</html>

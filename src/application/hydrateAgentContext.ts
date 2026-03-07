@@ -1,5 +1,5 @@
 import type { StoragePort } from "../ports/storage.js";
-import type { ToolResult } from "../domain/errors.js";
+import { toolSuccessResult, type ToolResult } from "../domain/errors.js";
 
 const RECENT_STEPS_LIMIT = 10;
 
@@ -7,10 +7,9 @@ export async function hydrateAgentContext(
   storage: StoragePort,
   agentKey: string
 ): Promise<ToolResult> {
-  const [macro, sessions, debates, steps] = await Promise.all([
+  const [macro, sessions, steps] = await Promise.all([
     storage.getMacro(),
     storage.getRecentSessions(3),
-    storage.getOpenDebates(agentKey),
     storage.getRecentStepsByAgentKey(agentKey, RECENT_STEPS_LIMIT),
   ]);
   const parts: string[] = [];
@@ -32,12 +31,6 @@ export async function hydrateAgentContext(
           .join("\n")
     );
   }
-  if (debates.length > 0) {
-    parts.push(
-      "## Debates abiertos\n" +
-        debates.map((d) => `- [${d.id}] ${d.title} (${d.role})${d.content ? `: ${d.content}` : ""}`).join("\n")
-    );
-  }
-  const text = parts.length > 0 ? parts.join("\n\n") : "Sin contexto persistido (macro, sesiones ni debates).";
-  return { content: [{ type: "text", text }] };
+  const text = parts.length > 0 ? parts.join("\n\n") : "Sin contexto persistido (macro ni sesiones).";
+  return toolSuccessResult(text);
 }

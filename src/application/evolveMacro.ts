@@ -1,6 +1,6 @@
 import type { StoragePort } from "../ports/storage.js";
 import type { GeminiPort } from "../ports/gemini.js";
-import { toolErrorResult, type ToolResult } from "../domain/errors.js";
+import { toolErrorResult, toolSuccessResult, messageFromUnknown, type ToolResult } from "../domain/errors.js";
 
 const RECENT_SESSIONS_LIMIT = 10;
 
@@ -17,12 +17,9 @@ export function evolveMacroOrchestrator(ports: Ports): () => Promise<ToolResult>
     try {
       await ports.storage.setMacro(newContent);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("mcp-vitacore: setMacro failed:", msg);
+      console.error("mcp-vitacore: setMacro failed:", messageFromUnknown(err));
       return toolErrorResult("Error al guardar el Macro.");
     }
-    return {
-      content: [{ type: "text", text: "Macro evolucionado y guardado." }],
-    };
+    return toolSuccessResult("Macro evolucionado y guardado.");
   };
 }

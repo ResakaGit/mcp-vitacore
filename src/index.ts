@@ -9,6 +9,7 @@ import { getConfig } from "./config.js";
 import { createStorageAdapter } from "./adapters/sqlite/storageAdapter.js";
 import { createGeminiAdapter } from "./adapters/gemini/geminiAdapter.js";
 import { startServer } from "./adapters/mcp/server.js";
+import { messageFromUnknown } from "./domain/errors.js";
 
 const MCP_NAME = "mcp-vitacore";
 
@@ -43,10 +44,9 @@ async function main(): Promise<void> {
     try {
       fs.mkdirSync(dbDir, { recursive: true });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
       failValidation(
         "No se pudo crear el directorio de la base de datos.",
-        msg,
+        messageFromUnknown(err),
         [
           `Verifica que la ruta sea válida y tengas permisos de escritura: ${dbDir}`,
           "O usa :memory: para DB en memoria: VITACORE_DB_PATH=:memory:",
@@ -59,10 +59,9 @@ async function main(): Promise<void> {
   try {
     storage = createStorageAdapter(VITACORE_DB_PATH);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
     failValidation(
       "No se pudo inicializar SQLite (better-sqlite3).",
-      msg,
+      messageFromUnknown(err),
       [
         "Instala dependencias: cd mcp-vitacore && npm install (better-sqlite3 requiere compilación nativa).",
         "En Docker: usa la imagen del proyecto (Dockerfile multi-stage ya incluye las deps).",
@@ -75,10 +74,9 @@ async function main(): Promise<void> {
   try {
     await gemini.generateSessionSummary([]);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
     failValidation(
       "Gemini no responde (health check falló).",
-      msg,
+      messageFromUnknown(err),
       [
         "Comprueba GEMINI_API_KEY y que la API de Google AI esté accesible.",
         "Verifica conectividad de red y que GEMINI_MODEL sea un modelo válido (ej. gemini-2.0-flash).",
@@ -91,7 +89,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  const msg = err instanceof Error ? err.message : String(err);
-  console.error(`[MCP: ${MCP_NAME}]`, msg);
+  console.error(`[MCP: ${MCP_NAME}]`, messageFromUnknown(err));
   process.exit(1);
 });
